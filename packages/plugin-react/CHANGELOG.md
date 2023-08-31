@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Fix [#211](https://github.com/vitejs/vite-plugin-react/issues/211): Add `@types/babel__cores` to dependencies
+
+## 4.0.4 (2023-07-31)
+
+- Fix [#198](https://github.com/vitejs/vite-plugin-react/discussions/198): Enable Babel if presets list is not empty
+
+## 4.0.3 (2023-07-10)
+
+- Revert [#108](https://github.com/vitejs/vite-plugin-react/pull/108): Remove throw when refresh runtime is loaded twice to enable usage in micro frontend apps. This was added to help fix setup usage, and this is not worth an annoying warning for others or a config parameter.
+
+## 4.0.2 (2023-07-06)
+
+- Fix fast-refresh for files that are transformed into jsx ([#188](https://github.com/vitejs/vite-plugin-react/pull/188))
+
 ## 4.0.1 (2023-06-19)
 
 - Support [Vitest deps.experimentalOptimizer](https://vitest.dev/config/#deps-experimentaloptimizer)

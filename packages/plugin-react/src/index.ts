@@ -1,5 +1,7 @@
+// eslint-disable-next-line import/no-duplicates
+import type * as babelCore from '@babel/core'
+// eslint-disable-next-line import/no-duplicates
 import type { ParserOptions, TransformOptions } from '@babel/core'
-import * as babel from '@babel/core'
 import { createFilter } from 'vite'
 import type {
   BuildOptions,
@@ -14,6 +16,15 @@ import {
   runtimeCode,
   runtimePublicPath,
 } from './fast-refresh'
+
+// lazy load babel since it's not used during build if plugins are not used
+let babel: typeof babelCore | undefined
+async function loadBabel() {
+  if (!babel) {
+    babel = await import('@babel/core')
+  }
+  return babel
+}
 
 export interface Options {
   include?: string | RegExp | Array<string | RegExp>
@@ -145,6 +156,9 @@ export default function viteReact(opts: Options = {}): PluginOption[] {
           hooks.forEach((hook) => hook(babelOptions, context, config))
         }
       } else if (typeof opts.babel !== 'function') {
+        // Because hooks and the callback option can mutate the Babel options
+        // we only create static option in this case and re-create them
+        // each time otherwise
         staticBabelOptions = createBabelOptions(opts.babel)
       }
     },
@@ -173,8 +187,8 @@ export default function viteReact(opts: Options = {}): PluginOption[] {
         !ssr &&
         (isJSX ||
           (opts.jsxRuntime === 'classic'
-            ? code.includes(devRuntime)
-            : importReactRE.test(code)))
+            ? importReactRE.test(code)
+            : code.includes(devRuntime)))
       if (useFastRefresh) {
         plugins.push([
           await loadPlugin('react-refresh/babel'),
@@ -195,6 +209,7 @@ export default function viteReact(opts: Options = {}): PluginOption[] {
       // Avoid parsing if no special transformation is needed
       if (
         !plugins.length &&
+        !babelOptions.presets.length &&
         !babelOptions.configFile &&
         !babelOptions.babelrc
       ) {
@@ -211,6 +226,7 @@ export default function viteReact(opts: Options = {}): PluginOption[] {
         parserPlugins.push('typescript')
       }
 
+      const babel = await loadBabel()
       const result = await babel.transformAsync(code, {
         ...babelOptions,
         root: projectRoot,
